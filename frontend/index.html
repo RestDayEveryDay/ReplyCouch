@@ -67,6 +67,90 @@
 
   </section>
 
+  <!-- ============================ 卡片式进入流程 ============================ -->
+  <section id="flowView" class="flow" hidden>
+    <header class="home-top flow-top">
+      <div class="brand">
+        <span class="brand-mark">师</span>
+        <span class="brand-name">军师</span>
+      </div>
+      <div class="home-top-right">
+        <button id="flowBackBtn" class="link-btn">返回</button>
+        <span id="flowEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
+      </div>
+    </header>
+
+    <div class="flow-shell">
+      <div class="flow-progress" aria-label="当前步骤">
+        <span class="flow-dot active" data-flow-dot="entry"></span>
+        <span class="flow-dot" data-flow-dot="scenario"></span>
+        <span class="flow-dot" data-flow-dot="background"></span>
+        <span class="flow-dot" data-flow-dot="task"></span>
+      </div>
+
+      <div class="flow-card" data-flow-step="entry">
+        <p class="flow-kicker">先定一下入口</p>
+        <h2 id="flowStepTitle" class="flow-title">这次怎么开始？</h2>
+        <p id="flowStepSub" class="flow-sub">可以接着旧档案聊，也可以开一段新的。</p>
+        <div class="flow-choice-grid two">
+          <button id="flowUseArchiveBtn" class="flow-choice">
+            <span class="flow-choice-title">从旧档案进入</span>
+            <span class="flow-choice-desc">接着之前攒下的聊天和背景继续问。</span>
+          </button>
+          <button id="flowCreateArchiveBtn" class="flow-choice">
+            <span class="flow-choice-title">创建新档案</span>
+            <span class="flow-choice-desc">从选择对象开始，重新交代这段对话。</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flow-card" data-flow-step="archives" hidden>
+        <p class="flow-kicker">旧档案</p>
+        <h2 class="flow-title">选择一段继续</h2>
+        <p class="flow-sub">点开档案后，会带着之前的记录进入工作区。</p>
+        <div id="flowArchiveList" class="flow-archive-list"></div>
+      </div>
+
+      <div class="flow-card" data-flow-step="scenario" hidden>
+        <p class="flow-kicker">聊天对象</p>
+        <h2 class="flow-title">这次想看哪类对话？</h2>
+        <p class="flow-sub">选一个，后面的提示会跟着场景变化。</p>
+        <div id="flowScenarioGrid" class="flow-choice-grid"></div>
+      </div>
+
+      <div class="flow-card" data-flow-step="background" hidden>
+        <p class="flow-kicker">补充背景</p>
+        <h2 class="flow-title">告诉军师一点情况</h2>
+        <p class="flow-sub">选填，填了军师更懂情况。赶时间也可以直接跳过。</p>
+        <div class="flow-form-grid">
+          <label class="flow-field">
+            <span>我</span>
+            <textarea id="flowMyDetail" rows="3" placeholder="用几句话描述自己"></textarea>
+          </label>
+          <label class="flow-field">
+            <span>ta</span>
+            <textarea id="flowTheirDetail" rows="3" placeholder="用几句话描述ta"></textarea>
+          </label>
+          <label class="flow-field wide">
+            <span>当前关系/沟通背景</span>
+            <textarea id="flowRelationText" rows="3" placeholder="一句话说说你们现在的关系、近况或这次要处理的事"></textarea>
+          </label>
+        </div>
+        <div class="flow-actions">
+          <button id="flowSkipBackgroundBtn" class="btn-ghost">跳过</button>
+          <button id="flowContinueBackgroundBtn" class="btn-primary">继续</button>
+        </div>
+      </div>
+
+      <div class="flow-card" data-flow-step="task" hidden>
+        <p class="flow-kicker">这次任务</p>
+        <h2 class="flow-title">想让军师先做什么？</h2>
+        <p class="flow-sub">选完会进入对应输入卡，聊天记录和背景会自动带过去。</p>
+        <div id="flowTaskGrid" class="flow-choice-grid"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================ 工作区 ============================ -->
   <section id="workspaceView" class="workspace" hidden>
     <header class="topbar">
@@ -263,6 +347,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=20260615-copy-2"></script>
+  <script src="app.js?v=20260616-card-flow-1"></script>
 </body>
 </html>

@@ -16,6 +16,7 @@ const state = {
   record: "",          // 累积的关系记录（持久、会长大）
   mode: "reply",
   vaultOpen: false,    // 隐藏档案「保险柜」是否打开（连点 logo 解锁）
+  flowStep: "entry",
 };
 
 /* ---------------- 工具 ---------------- */
@@ -209,7 +210,7 @@ function renderEngineBadge() {
   if (eng.startsWith("qwen")) { text = "通义千问已接入"; llm = true; }
   else if (eng.startsWith("llm")) { text = "Claude 已接入"; llm = true; }
   else { text = "离线演示模式"; hint = "配置 DASHSCOPE_API_KEY 或 ANTHROPIC_API_KEY 后自动接入"; }
-  for (const id of ["engineBadge", "homeEngineBadge"]) {
+  for (const id of ["engineBadge", "homeEngineBadge", "flowEngineBadge"]) {
     const b = $(id); if (!b) continue;
     b.textContent = text; b.title = hint || eng;
     b.classList.toggle("llm", llm);
@@ -220,9 +221,126 @@ function renderEngineBadge() {
 function showView(view) {
   state.view = view;
   $("homeView").hidden = view !== "home";
+  $("flowView").hidden = view !== "flow";
   $("workspaceView").hidden = view !== "workspace";
   window.scrollTo(0, 0);
   if (view === "home") loadHomeArchives();
+}
+
+/* ---------------- 卡片式进入流程 ---------------- */
+const FLOW_STEPS = ["entry", "scenario", "background", "task"];
+const FLOW_TASKS = [
+  { mode: "reply", title: "帮我回", desc: "贴新消息，军师给你几种能直接发的说法。" },
+  { mode: "critique", title: "帮我评", desc: "把准备发的话贴进来，先看看稳不稳。" },
+  { mode: "relation", title: "分析聊天", desc: "读整段记录，判断状态和下一步方向。" },
+  { mode: "consult", title: "问军师", desc: "把拿不准的问题直接丢给军师判断。" },
+];
+
+function flowStepIndex(step) {
+  return Math.max(0, FLOW_STEPS.indexOf(step));
+}
+
+function updateFlowIntroCopy() {
+  $("flowStepTitle").textContent = "这次怎么开始？";
+  $("flowStepSub").textContent = "可以接着旧档案聊，也可以开一段新的。";
+}
+
+function showFlowStep(step) {
+  state.flowStep = step;
+  document.querySelectorAll("[data-flow-step]").forEach((el) => {
+    el.hidden = el.dataset.flowStep !== step;
+  });
+  document.querySelectorAll("[data-flow-dot]").forEach((dot) => {
+    const active = flowStepIndex(dot.dataset.flowDot) <= flowStepIndex(step);
+    dot.classList.toggle("active", active);
+  });
+  showView("flow");
+}
+
+function resetDraftSession() {
+  state.activeArchive = null;
+  state.scenario = state.meta.scenarios[0].id;
+  state.my_sliders = {};
+  state.their_sliders = {};
+  state.my_gender = null;
+  state.their_gender = null;
+  state.record = "";
+  ["myDetail", "theirDetail", "relationText", "chatHistory", "intent", "consultQuestion", "draftReply"].forEach((id) => { if ($(id)) $(id).value = ""; });
+  ["flowMyDetail", "flowTheirDetail", "flowRelationText"].forEach((id) => { if ($(id)) $(id).value = ""; });
+  clearImage();
+  applyTheme();
+  renderSelectors();
+  renderRecord();
+  setWsTitle("还没起名");
+  clearResults();
+}
+
+function startCardFlow() {
+  resetDraftSession();
+  renderFlowScenarios();
+  renderFlowTasks();
+  updateFlowIntroCopy();
+  showFlowStep("entry");
+}
+
+async function renderFlowArchives() {
+  const list = $("flowArchiveList");
+  list.innerHTML = '<div class="flow-empty">正在取档案…</div>';
+  let items = [];
+  try { items = await (await fetch("/api/archives")).json(); } catch { items = []; }
+  if (!items.length) {
+    list.innerHTML = '<div class="flow-empty">还没有档案。先创建新档案，聊完之后就能从这里继续。</div>';
+    return;
+  }
+  list.innerHTML = items.map((it) => {
+    const sc = state.meta.scenarios.find((s) => s.id === it.scenario);
+    const last = (it.chat_history || "").split("\n").filter((l) => l.trim()).slice(-1)[0] || "还没有聊天记录";
+    return `
+      <button class="flow-archive-card" data-id="${it.id}">
+        <span class="flow-archive-name">${escapeHtml(it.name)}</span>
+        <span class="flow-archive-meta">${escapeHtml(sc ? sc.name : it.scenario)}</span>
+        <span class="flow-archive-last">${cleanText(last.slice(0, 72))}</span>
+      </button>`;
+  }).join("");
+  list.querySelectorAll(".flow-archive-card").forEach((el) => {
+    el.addEventListener("click", () => openArchive(items.find((x) => x.id === +el.dataset.id)));
+  });
+}
+
+function renderFlowScenarios() {
+  $("flowScenarioGrid").innerHTML = state.meta.scenarios.map((s) => `
+    <button class="flow-choice" data-flow-scenario="${s.id}">
+      <span class="flow-choice-title">${escapeHtml(s.name)}</span>
+      <span class="flow-choice-desc">${escapeHtml(s.desc)}</span>
+    </button>`).join("");
+}
+
+function renderFlowTasks() {
+  $("flowTaskGrid").innerHTML = FLOW_TASKS.map((t) => `
+    <button class="flow-choice" data-flow-mode="${t.mode}">
+      <span class="flow-choice-title">${t.title}</span>
+      <span class="flow-choice-desc">${t.desc}</span>
+    </button>`).join("");
+}
+
+function syncFlowBackground() {
+  $("myDetail").value = $("flowMyDetail").value.trim();
+  $("theirDetail").value = $("flowTheirDetail").value.trim();
+  $("relationText").value = $("flowRelationText").value.trim();
+}
+
+function continueAfterBackground() {
+  syncFlowBackground();
+  showFlowStep("task");
+}
+
+function enterWorkspaceMode(mode) {
+  syncFlowBackground();
+  renderSelectors();
+  renderRecord();
+  setWsTitle(state.activeArchive ? state.activeArchive.name : "还没起名");
+  setMode(mode);
+  showView("workspace");
 }
 
 /* ---------------- 首页 ---------------- */
@@ -757,19 +875,8 @@ function openArchive(item) {
 }
 
 function newSession() {
-  state.activeArchive = null;
-  state.scenario = state.meta.scenarios[0].id;
-  state.my_sliders = {}; state.their_sliders = {};
-  state.my_gender = null; state.their_gender = null;
-  state.record = "";
-  ["myDetail", "theirDetail", "relationText", "chatHistory", "intent", "consultQuestion", "draftReply"].forEach((id) => { if ($(id)) $(id).value = ""; });
-  clearImage();
-  applyTheme();
-  renderSelectors();
-  renderRecord();
+  resetDraftSession();
   $("profileFold").open = false;   // 新会话：选填区收起，先走最小路径
-  setWsTitle("还没起名");
-  clearResults();
   setMode("reply");
   showView("workspace");
 }
@@ -835,7 +942,37 @@ async function loadHistoryList() {
 /* ---------------- 事件绑定 ---------------- */
 function bindEvents() {
   // 首页
-  $("startBtn").addEventListener("click", newSession);
+  $("startBtn").addEventListener("click", startCardFlow);
+  $("flowBackBtn").addEventListener("click", () => {
+    if (state.flowStep === "entry") showView("home");
+    else if (state.flowStep === "scenario") showFlowStep("entry");
+    else if (state.flowStep === "background") showFlowStep("scenario");
+    else if (state.flowStep === "task") showFlowStep("background");
+    else showFlowStep("entry");
+  });
+  $("flowUseArchiveBtn").addEventListener("click", async () => {
+    await renderFlowArchives();
+    showFlowStep("archives");
+  });
+  $("flowCreateArchiveBtn").addEventListener("click", () => {
+    resetDraftSession();
+    renderFlowScenarios();
+    showFlowStep("scenario");
+  });
+  $("flowScenarioGrid").addEventListener("click", (e) => {
+    const c = e.target.closest("[data-flow-scenario]"); if (!c) return;
+    state.scenario = c.dataset.flowScenario;
+    state.my_sliders = {}; state.their_sliders = {};
+    applyTheme();
+    renderSelectors();
+    showFlowStep("background");
+  });
+  $("flowSkipBackgroundBtn").addEventListener("click", () => showFlowStep("task"));
+  $("flowContinueBackgroundBtn").addEventListener("click", continueAfterBackground);
+  $("flowTaskGrid").addEventListener("click", (e) => {
+    const c = e.target.closest("[data-flow-mode]"); if (!c) return;
+    enterWorkspaceMode(c.dataset.flowMode);
+  });
   $("backHomeBtn").addEventListener("click", () => showView("home"));
 
   // 选择
