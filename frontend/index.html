@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>军师 — 话到嘴边，问问军师</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20260615-topbar-1">
+  <link rel="stylesheet" href="style.css?v=20260616-card-flow-2">
 </head>
 <body>
   <!-- 全局拖拽遮罩：拖截图到页面任意位置 -->
@@ -69,15 +69,13 @@
 
   <!-- ============================ 卡片式进入流程 ============================ -->
   <section id="flowView" class="flow" hidden>
-    <header class="home-top flow-top">
-      <div class="brand">
-        <span class="brand-mark">师</span>
-        <span class="brand-name">军师</span>
+    <header class="flow-tools">
+      <div class="theme-switch" title="换个配色">
+        <button class="theme-dot" data-theme="sand" title="砂" aria-label="砂色配色"></button>
+        <button class="theme-dot" data-theme="mist" title="雾" aria-label="雾色配色"></button>
+        <button class="theme-dot" data-theme="dusk" title="黛" aria-label="黛色配色"></button>
       </div>
-      <div class="home-top-right">
-        <button id="flowBackBtn" class="link-btn">返回</button>
-        <span id="flowEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
-      </div>
+      <span id="flowEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
     </header>
 
     <div class="flow-shell">
@@ -87,6 +85,7 @@
         <span class="flow-dot" data-flow-dot="background"></span>
         <span class="flow-dot" data-flow-dot="task"></span>
       </div>
+      <button id="flowBackBtn" class="flow-card-back" type="button">返回</button>
 
       <div class="flow-card" data-flow-step="entry">
         <p class="flow-kicker">先定一下入口</p>
@@ -347,6 +346,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=20260616-card-flow-1"></script>
+  <script src="app.js?v=20260616-card-flow-2"></script>
 </body>
 </html>

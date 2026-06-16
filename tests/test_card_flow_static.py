@@ -32,6 +32,9 @@ class CardFlowStaticTest(unittest.TestCase):
         self.assertIn("创建新档案", html)
         self.assertIn("补充背景", html)
         self.assertIn("选填，填了军师更懂情况", html)
+        self.assertIn('class="flow-tools"', html)
+        self.assertIn('class="flow-card-back"', html)
+        self.assertNotIn('class="home-top flow-top"', html)
 
     def test_frontend_script_orchestrates_card_flow(self):
         js = read("frontend/app.js")
@@ -53,6 +56,10 @@ class CardFlowStaticTest(unittest.TestCase):
         self.assertIn("flowArchiveList", js)
         self.assertIn("flowScenarioGrid", js)
         self.assertIn("flowTaskGrid", js)
+        self.assertIn("把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。", js)
+        self.assertIn("写好一句拿不准的回复，军师给你分析，再写一段仅供参考。", js)
+        self.assertIn("军师会把整段聊天读一遍", js)
+        self.assertIn("敲下心里的疑问", js)
 
     def test_card_flow_has_dedicated_styles(self):
         css = read("frontend/style.css")
@@ -64,6 +71,8 @@ class CardFlowStaticTest(unittest.TestCase):
             ".flow-choice-grid",
             ".flow-choice",
             ".flow-progress",
+            ".flow-tools",
+            ".flow-card-back",
         ]:
             self.assertIn(selector, css)
 

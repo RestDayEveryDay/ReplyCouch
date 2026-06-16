@@ -230,10 +230,10 @@ function showView(view) {
 /* ---------------- 卡片式进入流程 ---------------- */
 const FLOW_STEPS = ["entry", "scenario", "background", "task"];
 const FLOW_TASKS = [
-  { mode: "reply", title: "帮我回", desc: "贴新消息，军师给你几种能直接发的说法。" },
-  { mode: "critique", title: "帮我评", desc: "把准备发的话贴进来，先看看稳不稳。" },
-  { mode: "relation", title: "分析聊天", desc: "读整段记录，判断状态和下一步方向。" },
-  { mode: "consult", title: "问军师", desc: "把拿不准的问题直接丢给军师判断。" },
+  { mode: "reply", title: "帮我回", desc: "把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。" },
+  { mode: "critique", title: "帮我评", desc: "写好一句拿不准的回复，军师给你分析，再写一段仅供参考。" },
+  { mode: "relation", title: "分析聊天", desc: "军师会把整段聊天读一遍，判断你俩的关系阶段、对方的信号、你的问题，再给方向。" },
+  { mode: "consult", title: "问军师", desc: "敲下心里的疑问，军师结合你们的聊天记录，帮你分析。" },
 ];
 
 function flowStepIndex(step) {

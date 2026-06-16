@@ -259,8 +259,15 @@ textarea, input { font-family: inherit; }
   margin: 0 auto;
   padding: 0 28px 80px;
 }
-.flow-top { margin-bottom: 28px; }
+.flow-tools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0 0;
+}
 .flow-shell {
+  position: relative;
   max-width: 760px;
   margin: 54px auto 0;
 }
@@ -284,11 +291,30 @@ textarea, input { font-family: inherit; }
   opacity: 1;
 }
 .flow-card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 34px;
   box-shadow: var(--shadow);
+}
+.flow-card-back {
+  position: absolute;
+  top: 31px;
+  right: 18px;
+  z-index: 3;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+}
+.flow-card-back:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-weak);
 }
 .flow-kicker {
   font-size: 12px;
