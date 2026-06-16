@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>军师 — 话到嘴边，问问军师</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=20260615-topbar-1">
+</head>
+<body>
+  <!-- 全局拖拽遮罩：拖截图到页面任意位置 -->
+  <div id="dropOverlay" class="drop-overlay" hidden>
+    <div class="drop-card">松手，交给军师</div>
+  </div>
+
+  <!-- ============================ 首页 ============================ -->
+  <section id="homeView" class="home">
+    <header class="home-top">
+      <div class="brand">
+        <span class="brand-mark" id="brandMark">师</span>
+        <span class="brand-name">军师</span>
+      </div>
+      <div class="home-top-right">
+        <div class="theme-switch" title="换个配色">
+          <button class="theme-dot" data-theme="sand" title="砂" aria-label="砂色配色"></button>
+          <button class="theme-dot" data-theme="mist" title="雾" aria-label="雾色配色"></button>
+          <button class="theme-dot" data-theme="dusk" title="黛" aria-label="黛色配色"></button>
+        </div>
+        <span id="homeEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
+      </div>
+    </header>
+
+    <div class="hero">
+      <h1 class="hero-title">话到嘴边，<br>问问军师。</h1>
+      <p class="hero-sub">不知话题如何延续？不知表达怎样得体？军师已听召前来，随您调遣。</p>
+      <div class="hero-actions">
+        <button id="startBtn" class="btn-primary lg">问一问</button>
+      </div>
+    </div>
+
+    <div class="do-row">
+      <div class="do-card">
+        <span class="do-no">01</span>
+        <h3>帮回消息</h3>
+        <p>三档语气，任君选择</p>
+      </div>
+      <div class="do-card">
+        <span class="do-no">02</span>
+        <h3>判断情况</h3>
+        <p>把整段聊天读一遍，告诉你目前状态、该往哪走</p>
+      </div>
+      <div class="do-card">
+        <span class="do-no">03</span>
+        <h3>有问必答</h3>
+        <p>拿不准怎么开口、怎么跟进、怎么收场，军师替你判断</p>
+      </div>
+    </div>
+
+    <div class="archives-home" id="archivesHome">
+      <div class="section-head">
+        <h2 id="archiveTitle">我的档案</h2>
+        <span class="muted" id="archiveCount"></span>
+        <button id="vaultExitBtn" class="link-btn" hidden>退出隐藏</button>
+      </div>
+      <div id="homeArchiveList" class="archive-grid"></div>
+    </div>
+
+  </section>
+
+  <!-- ============================ 工作区 ============================ -->
+  <section id="workspaceView" class="workspace" hidden>
+    <header class="topbar">
+      <button id="backHomeBtn" class="link-btn">← 军师</button>
+      <div class="ws-title" id="wsTitle" title="点一下改名">还没起名</div>
+      <div class="topbar-right">
+        <div class="theme-switch" title="换个配色">
+          <button class="theme-dot" data-theme="sand" title="砂" aria-label="砂色配色"></button>
+          <button class="theme-dot" data-theme="mist" title="雾" aria-label="雾色配色"></button>
+          <button class="theme-dot" data-theme="dusk" title="黛" aria-label="黛色配色"></button>
+        </div>
+        <span id="engineBadge" class="badge-quiet" title="生成引擎状态">…</span>
+        <button id="historyBtn" class="link-btn">历史</button>
+      </div>
+    </header>
+
+    <div class="ws-grid">
+      <!-- 左：和谁聊 + 画像（文字为主） -->
+      <aside class="ws-side">
+        <div class="block">
+          <h3 class="block-title">和谁聊</h3>
+          <div id="scenarioGrid" class="scenario-grid"></div>
+        </div>
+
+        <details class="side-fold" id="profileFold">
+          <summary class="side-fold-sum">
+            <span>补充背景</span>
+            <span class="fold-opt">选填 · 填了更准</span>
+          </summary>
+          <div class="side-fold-body">
+            <div class="block">
+              <div class="block-head">
+                <h3 class="block-title">我</h3>
+                <button class="micro-btn" data-genprofile="me">军师帮我写</button>
+              </div>
+              <textarea id="myDetail" class="profile-input" rows="3"
+                placeholder="用几句话描述自己"></textarea>
+              <div class="supplement">
+                <div id="mySliders" class="sliders"></div>
+                <div id="myGenders" class="chips mini gender-mini"></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="block-head">
+                <h3 class="block-title">ta</h3>
+                <button class="micro-btn" data-genprofile="their">军师帮我写</button>
+              </div>
+              <textarea id="theirDetail" class="profile-input" rows="3"
+                placeholder="用几句话描述ta"></textarea>
+              <div class="supplement">
+                <div id="theirSliders" class="sliders"></div>
+                <div id="theirGenders" class="chips mini gender-mini"></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <h3 class="block-title" id="relationTitle">你俩现在</h3>
+              <textarea id="relationText" class="profile-input" rows="2"
+                placeholder="一句话说说你俩的关系和近况：认识多久、走到哪一步、最近发生了什么…"></textarea>
+              <div class="supplement">
+                <div id="relationStages" class="chips mini"></div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <button id="archiveSaveBtn" class="btn-ghost full">存到档案</button>
+      </aside>
+
+      <!-- 右：对话 + 三种动作 + 结果 -->
+      <main class="ws-main">
+        <div id="onboardTip" class="onboard-tip" hidden>
+          <span class="ob-step"><b>1</b> 选个场景</span>
+          <span class="ob-arrow">→</span>
+          <span class="ob-step"><b>2</b> 贴一段对话</span>
+          <span class="ob-arrow">→</span>
+          <span class="ob-step"><b>3</b> 点【给出回复】</span>
+        </div>
+        <div class="convo">
+          <div class="convo-head">
+            <h3 class="block-title" id="recordTitle">这段关系的记录</h3>
+            <div class="convo-head-right">
+              <span class="muted" id="recordCount"></span>
+              <button id="recordEditBtn" class="micro-btn">编辑</button>
+            </div>
+          </div>
+          <div id="recordTimeline" class="record-timeline"></div>
+          <textarea id="recordEditor" class="record-editor" rows="8" hidden
+            placeholder="一行一句，例如：&#10;对方：你最近怎么样&#10;我：还行"></textarea>
+
+          <div class="newmsg-head">
+            <h4 class="newmsg-title">这次的新消息</h4>
+            <label id="imageDrop" class="drop-inline">
+              <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+              <span id="imageDropHint">拖截图进来 · 点击选 · 直接粘贴</span>
+            </label>
+          </div>
+          <div id="imagePreviewWrap" class="image-preview-wrap" hidden>
+            <img id="imagePreview" alt="截图预览">
+            <button id="imageRemove" class="image-remove" title="移除截图">移除</button>
+          </div>
+          <textarea id="chatHistory" rows="4"
+            placeholder="把对方刚发的、或你们最新一段对话贴这里&#10;对方：…&#10;我：…"></textarea>
+          <div class="examples"><span class="muted">试试</span><span id="exampleChips"></span></div>
+          <div class="newmsg-foot">
+            <p class="newmsg-hint">问完军师，这段会自动攒进上面的记录里。</p>
+            <button id="saveRecordBtn" class="btn-ghost sm">只存不问</button>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="军师能帮你做什么">
+          <button class="tab-btn active" data-mode="reply" role="tab" aria-selected="true">帮我回</button>
+          <button class="tab-btn" data-mode="critique" role="tab" aria-selected="false">帮我评</button>
+          <button class="tab-btn" data-mode="relation" role="tab" aria-selected="false">分析聊天</button>
+          <button class="tab-btn" data-mode="consult" role="tab" aria-selected="false">问军师</button>
+        </div>
+
+        <!-- 模式一：帮我回 -->
+        <div id="replyPane" class="pane">
+          <div class="row-controls">
+            <input id="intent" type="text" placeholder="想说什么（可选）：比如想约 ta 周末看电影，但不知道怎么开口">
+            <button id="generateBtn" class="btn-primary">给出回复</button>
+          </div>
+          <div id="replyResults" class="results-area">
+            <div class="placeholder">把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。</div>
+          </div>
+        </div>
+
+        <!-- 模式：帮我评 -->
+        <div id="critiquePane" class="pane" hidden>
+          <textarea id="draftReply" class="draft-input" rows="3"
+            placeholder="把你准备发出去的那句（或几句）贴进来，军师帮你参谋参谋…"></textarea>
+          <div class="row-controls end">
+            <button id="critiqueBtn" class="btn-primary">评一评这句</button>
+          </div>
+          <div id="critiqueResults" class="results-area">
+            <div class="placeholder">写好一句拿不准的回复，军师给你分析，再写一段仅供参考。</div>
+          </div>
+        </div>
+
+        <!-- 模式二：分析聊天 -->
+        <div id="relationPane" class="pane" hidden>
+          <div class="row-controls">
+            <p class="scope-hint" id="relationScope">分析当前这段聊天记录。</p>
+            <button id="summaryBtn" class="btn-primary">看走到哪了</button>
+          </div>
+          <div id="summaryResults" class="results-area">
+            <div class="placeholder">军师会把整段聊天读一遍，判断你俩的关系阶段、对方的信号、你的问题，再给方向。</div>
+          </div>
+        </div>
+
+        <!-- 模式三：问军师 -->
+        <div id="consultPane" class="pane" hidden>
+          <div id="consultPresets" class="preset-chips"></div>
+          <div class="row-controls">
+            <input id="consultQuestion" type="text" placeholder="问军师：ta 是不是喜欢我？我们是互相喜欢吗？该不该主动出击？">
+            <button id="consultBtn" class="btn-primary">问</button>
+          </div>
+          <div id="consultResults" class="results-area">
+            <div class="placeholder">敲下心里的疑问，军师结合你们的聊天记录，帮你分析。</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- 历史抽屉 -->
+  <div id="drawerMask" class="drawer-mask" hidden></div>
+  <aside id="historyDrawer" class="drawer" hidden>
+    <div class="drawer-head">
+      <h3>历史记录</h3>
+      <div>
+        <button id="clearHistoryBtn" class="link-btn">清空</button>
+        <button id="closeDrawerBtn" class="link-btn">关闭</button>
+      </div>
+    </div>
+    <div id="historyList" class="history-list"></div>
+  </aside>
+
+  <!-- 起名弹窗 -->
+  <div id="nameModalMask" class="modal-mask" hidden>
+    <div class="modal-card">
+      <h3 class="modal-title" id="nameModalTitle">给这段对话起个名</h3>
+      <p class="modal-sub">取个好记的名字，方便之后在档案里认出来</p>
+      <input id="nameModalInput" class="modal-input" type="text" maxlength="20"
+        placeholder="比如：小美、张导师、王阿姨…">
+      <div class="modal-actions">
+        <button id="nameModalCancel" class="btn-ghost sm">取消</button>
+        <button id="nameModalOk" class="btn-primary">存好了</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js?v=20260615-copy-2"></script>
+</body>
+</html>

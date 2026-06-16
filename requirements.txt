@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn>=0.29
+python-dotenv>=1.0    # 从 .env 自动加载 API Key
+anthropic>=0.40        # 可选：用 Claude 时需要
+openai>=1.0           # 可选：用阿里通义千问（DashScope 兼容接口）时需要

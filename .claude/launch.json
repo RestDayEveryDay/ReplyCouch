@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "reply-coach",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-c", "cd /Users/xuxinrui/Desktop/人机交互/reply-coach && source .venv/bin/activate && uvicorn backend.main:app --host 127.0.0.1 --port 8000"],
+      "port": 8000,
+      "cwd": "/Users/xuxinrui/Desktop/人机交互/reply-coach"
+    }
+  ]
+}
