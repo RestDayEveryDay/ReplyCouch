@@ -1,114 +1,135 @@
-# 回复军师 ReplyCoach 🛡️
+# 回复军师 ——新手人类社会化指北
 
-> 高风险聊天回复助手 —— 在 crush、导师、面试官、长辈这些"一句话定生死"的聊天场景里，
-> 帮你解读对方的潜台词、评估翻车风险，并按你和对方的性格生成三档语气的得体回复。
+​     这里是徐欣睿的人机交互课程大项目。
 
-人机交互课程大项目。
+​     这是一个面向不同聊天场景的回复辅助工具。在面对心动对象、导师、面试官、长辈这类容易使人不知所措的对话里，军师帮你解读对方消息里的潜台词、估一估翻车风险，再结合你和对方的性格，生成几档不同语气的得体回复；也可以把自己想发的草稿丢进来让它点评。同时，存档功能赋予其结构化存储对话对象的能力，随着文本量和上下文的积累，军师可以随时完善调整双方画像，也可以判断聊天状态和当前需要注意的问题。
 
-## 功能一览
+---
 
-| 模块 | 说明 |
-|---|---|
-| 🎭 四大高风险场景 | 心动对象 / 导师 / 面试官 / 长辈亲戚 |
-| 📷 聊天截图识别 | 点击/拖拽/Ctrl+V 粘贴截图，LLM 模式自动识别对方消息（离线模式优雅降级） |
-| 👥 双方性格画像 | 我方 4 种 × 对方 4 种，影响回复风格与策略建议 |
-| 🔍 潜台词解读 | 识别「在吗」「呵呵」「改天吧」等信号并给出解读 |
-| 🌡️ 翻车风险仪表盘 | 0–100 风险分 + 安全区/谨慎区/高危区 |
-| 🗂️ 三档语气回复 | 稳妥 / 自然 / 大胆，每条附表情建议和"为什么这样回" |
-| 📱 手机预览 | 发送前在模拟聊天界面里看效果，降低手滑成本 |
-| 🕘 历史记录 | SQLite 持久化，可回看、恢复、删除 |
-| 🌗 深浅色主题 | 一键切换，本地记忆 |
+## 一、技术栈
 
-## 快速开始（零配置，离线可跑）
+- 后端：Python 3.9 + FastAPI + Uvicorn
+- 存储：SQLite（标准库 `sqlite3`，零额外依赖，运行时自动建库）
+- 前端：原生 HTML / CSS / JavaScript（无前端框架，无需构建）
+- 生成引擎：以**大模型（LLM）为核心**
+  - **LLM 引擎**：配置 API Key 后由大模型生成回复，是产品的真实运行模式
+  - **离线规则引擎**：仅作断网/异常时的兜底，输出为模板化结果，不代表真实效果
 
-```bash
-cd reply-coach
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn backend.main:app --reload --port 8000
-```
+> ⚠️ 本项目是 AI 生成应用，**运行前需要配置一个大模型 API Key**（见「四、配置 API Key」）。
+> 未配置时系统会回退到离线规则引擎，仅能展示界面与流程，回复内容是占位模板。
 
-打开 <http://127.0.0.1:8000> 即可。默认使用**离线规则引擎**，不需要任何 API Key，
-课堂演示不依赖网络（这同时也是 HCI 方法里的 Wizard-of-Oz 降级路径）。
+---
 
-## 可选：接入 LLM 真实生成
-
-引擎可插拔，**按设置的 Key 自动选择提供方**（DashScope 优先于 Anthropic）：
-
-### A. 阿里通义千问（推荐，国内可直连）
-
-```bash
-pip install openai
-export DASHSCOPE_API_KEY=sk-xxx           # 阿里云百炼控制台获取
-export QWEN_MODEL=qwen-vl-max             # 可选，默认即此（带视觉，支持截图识别）
-uvicorn backend.main:app --reload --port 8000
-```
-
-Key 获取：登录[阿里云百炼控制台](https://bailian.console.aliyun.com) → API-KEY → 创建。
-走的是 DashScope 的 OpenAI 兼容接口，因此用标准 `openai` 库即可，无需额外 SDK。
-设置后顶栏徽章变为「🤖 通义千问已连接」。
-
-> 想用纯文本模型（更便宜）可设 `QWEN_MODEL=qwen-plus`，但截图识别需要视觉模型（`qwen-vl-max` / `qwen-vl-plus`）。
-
-### B. Claude（Anthropic 官方或兼容中转）
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-export ANTHROPIC_BASE_URL=https://api.anthropic.com  # 第三方中转时改为其 Base URL
-export ANTHROPIC_MODEL=claude-sonnet-4-6   # 可选，默认即此
-uvicorn backend.main:app --reload --port 8000
-```
-
-使用第三方中转时，中转服务需兼容 Anthropic Messages API（`POST /v1/messages`）。
-Anthropic SDK 会自动追加 `/v1/messages`，因此 `ANTHROPIC_BASE_URL` 通常只填写域名，
-例如 `https://gateway.example.com`，不要在末尾重复填写 `/v1`。
-
-两种引擎任一调用失败（断网、限流、Key 失效），后端都会**自动降级**回离线引擎并在前端提示，演示永不翻车。
-
-## 项目结构
+## 二、目录结构
 
 ```
-reply-coach/
-├── backend/
-│   ├── main.py        # FastAPI 路由 + 静态文件托管
-│   ├── engine.py      # 双引擎：离线规则 / Claude LLM（含潜台词分析、风险评分）
-│   ├── personas.py    # 场景、画像、语气档位定义
-│   └── db.py          # SQLite 历史记录
-├── frontend/
-│   ├── index.html     # 单页应用（无构建步骤）
-│   ├── style.css      # 设计系统：暗色玻璃拟态 + 浅色主题
-│   └── app.js         # 原生 JS 交互逻辑
-├── requirements.txt
+.
+├── backend/              后端
+│   ├── main.py           FastAPI 入口，定义所有 API 路由 + 托管前端静态文件
+│   ├── engine.py         回复生成引擎（离线规则 + LLM 双模式）
+│   ├── personas.py       场景定义、性格滑轨维度、画像描述生成
+│   └── db.py             SQLite 读写（历史记录 + 聊天归档，支持分页）
+├── frontend/             前端（被后端静态托管，无需单独启动）
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── seed_demo.py          演示数据脚本：灌入 18 段档案，填满分页
+├── test_chat.txt         示例聊天记录，可直接粘贴体验
+├── requirements.txt      依赖清单
+├── .env.example          环境变量样例（如需启用 LLM 模式时参考）
 └── README.md
 ```
 
-## API
+---
+
+## 三、环境要求
+
+- Python 3.9 及以上（开发环境为 3.9.6）
+- 依赖见 `requirements.txt`
+- 操作系统不限（macOS / Windows / Linux）
+- **一个大模型 API Key**（Claude 或阿里云通义千问，二选一）——产品的回复生成依赖它
+
+---
+
+## 四、配置 API Key
+
+本项目的核心是用大模型生成回复，**运行前必须配置一个 API Key**。复制样例文件并填入你的 Key：
+
+```bash
+cp .env.example .env
+```
+
+然后编辑 `.env`，在下面两种方案里**任选其一**填写（同时填写时优先使用通义千问）：
+
+| 变量 | 说明 |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | 方案一：启用 Claude 生成 |
+| `ANTHROPIC_BASE_URL` | 可选，使用第三方中转时填其 Base URL |
+| `ANTHROPIC_MODEL` | 可选，默认 `claude-sonnet-4-6` |
+| `DASHSCOPE_API_KEY` | 方案二：启用阿里云通义千问（默认 `qwen-vl-max`，支持截图识别） |
+
+> 启动后首页右上角的引擎角标会显示当前实际使用的引擎。若显示 `offline`，说明 Key 没读到，
+> 请检查 `.env` 是否在项目根目录、变量名是否拼对。**离线模式下的回复是占位模板，不是真实生成结果。**
+
+---
+
+## 五、安装与运行
+
+在项目根目录下执行：
+
+```bash
+# 1. （建议）创建并激活虚拟环境
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 确认已按「第四步」配置好 .env，然后启动服务
+uvicorn backend.main:app --reload --port 8000
+#   或等价地：python3 -m backend.main
+```
+
+启动后浏览器打开 **http://localhost:8000** 即可。
+
+---
+
+## 六、灌入演示数据（用于检查分页等功能）
+
+默认数据库是空的。**保持服务在 8000 端口运行**，另开一个终端执行：
+
+```bash
+python3 seed_demo.py            # 清空旧档案并灌入 18 段演示档案
+python3 seed_demo.py --keep     # 不清空，仅追加
+```
+
+灌完后首页档案列表共 18 段、分 3 页（每页 8 条），可用于演示数据过多时的分页展示能力。																																																																																																																																																																					
+
+---
+
+## 七、API 一览
 
 | 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/api/meta` | 场景/画像/语气定义 + 当前引擎模式 |
-| POST | `/api/generate` | 生成方案：`{scenario, my_persona, their_persona, received, intent}` |
-| GET | `/api/history` | 历史记录列表 |
-| DELETE | `/api/history/{id}` / `/api/history` | 删除单条 / 清空 |
+| --- | --- | --- |
+| GET | `/api/meta` | 返回场景、关系阶段、性别、语气等元数据 |
+| POST | `/api/generate` | 生成回复建议 |
+| POST | `/api/summary` | 关系分析 |
+| POST | `/api/consult` | 向军师提问咨询 |
+| POST | `/api/critique` | 点评用户草稿 |
+| POST | `/api/profile` | 生成画像描述 |
+| GET | `/api/history` | 历史记录 |
+| GET | `/api/archives?page=N&page_size=8` | 分页拉取聊天归档 |
+| POST / PUT / DELETE | `/api/archives` | 归档的增改删（含隐藏/恢复） |
 
-## 设计决策 ↔ HCI 评分点对照
+---
 
-这些是写进课程报告的素材，每个界面元素都对应一个可论证的设计决策：
+## 八、核心功能演示路径
 
-- **三档语气而非单一答案** —— 保留用户的自主权（user agency），系统是建议者不是代笔者。
-- **风险仪表盘可视化** —— 把抽象的社交焦虑转译为可感知的视觉信号（情感化设计）。
-- **军师点评（rationale）** —— 可解释性：告诉用户"为什么这样回"，帮助长期能力养成而非依赖。
-- **手机预览** —— 模拟真实发送语境，提供低成本的"反悔机会"（错误预防，Nielsen 启发式 #5）。
-- **示例消息一键填入** —— 降低首次使用门槛（recognition rather than recall，启发式 #6）。
-- **双引擎 + 自动降级** —— 系统状态可见性（启发式 #1）：顶栏徽章始终如实显示当前引擎。
-- **伦理立场内置** —— 界面与提示词中均声明"辅助真诚表达，不教操纵"，这是 HCI 伦理章节的落点。
-
-## 用户测试方案（建议）
-
-情景任务法：给被试一组聊天截图情景（如"导师周五晚上发来『来我办公室一趟』"），
-对照组直接回复，实验组使用本工具，测量：
-
-1. 决策时间（从看到消息到确定回复）
-2. 回复信心自评（1–7 Likert）
-3. 第三方评分员对回复得体度的盲评
+1. 打开首页，仪表盘展示「在聊的 / 本周问军师 / 需要关注」三项实时指标
+2. 点左上角 ☰ 展开侧边导航（推开式，主内容右移）
+3. 进入档案列表，演示分页（每页 8 条，共 3 页）
+4. 点首页中央「问一问」→ 选择场景 → 拖动性格滑轨配置画像
+5. 填入对方消息 → 生成 3 档不同语气的回复
+6. 命名存档 → 返回首页「继续上次」可一键恢复
+7. 隐藏 / 恢复档案
+8. 切换配色，全站即时生效

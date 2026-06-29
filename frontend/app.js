@@ -16,6 +16,7 @@ const state = {
   record: "",          // 累积的关系记录（持久、会长大）
   mode: "reply",
   vaultOpen: false,    // 隐藏档案「保险柜」是否打开（连点 logo 解锁）
+  drawerOpen: false,   // 首页左侧抽屉导航是否展开
   flowStep: "entry",
 };
 
@@ -224,7 +225,7 @@ function showView(view) {
   $("flowView").hidden = view !== "flow";
   $("workspaceView").hidden = view !== "workspace";
   window.scrollTo(0, 0);
-  if (view === "home") loadHomeArchives();
+  if (view === "home") setHomePanel("dash");
 }
 
 /* ---------------- 卡片式进入流程 ---------------- */
@@ -344,19 +345,28 @@ function enterWorkspaceMode(mode) {
 }
 
 /* ---------------- 首页 ---------------- */
-async function loadHomeArchives() {
+const ARCHIVE_PAGE_SIZE = 8;
+async function loadHomeArchives(page) {
+  if (page) state.archivePage = page;
+  if (!state.archivePage) state.archivePage = 1;
   const list = $("homeArchiveList");
   const vault = state.vaultOpen;
-  let items = [];
-  try { items = await (await fetch(`/api/archives${vault ? "?hidden=1" : ""}`)).json(); } catch { items = []; }
+  let data = { items: [], total: 0, page: 1, pages: 1 };
+  try {
+    const q = `/api/archives?page=${state.archivePage}&page_size=${ARCHIVE_PAGE_SIZE}${vault ? "&hidden=1" : ""}`;
+    data = await (await fetch(q)).json();
+  } catch {}
+  state.archivePage = data.page || 1;   // 后端会把越界页码夹回有效范围
+  const items = data.items || [];
   $("archiveTitle").textContent = vault ? "隐藏的档案" : "我的档案";
-  $("archivesHome").classList.toggle("vault", vault);
+  $("allPanel").classList.toggle("vault", vault);
   $("vaultExitBtn").hidden = !vault;
-  $("archiveCount").textContent = items.length ? `${items.length} 段聊天` : "";
+  $("archiveCount").textContent = data.total ? `${data.total} 段聊天` : "";
   if (!items.length) {
     list.innerHTML = vault
       ? '<div class="archive-empty">还没有隐藏档案。在档案卡片上点「隐藏」，就会将其收进这里。</div>'
       : '<div class="archive-empty">还没有档案。点上面「先问一句」，聊完存档，下次继续。</div>';
+    renderArchivePager(data);
     return;
   }
   list.innerHTML = items.map((it) => {
@@ -393,6 +403,133 @@ async function loadHomeArchives() {
   list.querySelectorAll("[data-unhide]").forEach((el) => {
     el.addEventListener("click", (ev) => { ev.stopPropagation(); setArchiveHidden(el.dataset.unhide, 0); });
   });
+  renderArchivePager(data);
+}
+
+// 分页控件：上一页 / 页码 / 下一页（数据多时展示系统的分页能力）
+function renderArchivePager(data) {
+  const pager = $("archivePager");
+  if (!pager) return;
+  const pages = data.pages || 1, cur = data.page || 1;
+  if (pages <= 1) { pager.innerHTML = ""; pager.hidden = true; return; }
+  pager.hidden = false;
+  const btn = (label, target, opts = {}) => {
+    const dis = opts.disabled ? " disabled" : "";
+    const on = opts.active ? " active" : "";
+    return `<button class="pager-btn${on}" data-page="${target}"${dis} aria-label="第 ${target} 页"${opts.active ? ' aria-current="page"' : ""}>${label}</button>`;
+  };
+  let html = btn("‹", cur - 1, { disabled: cur <= 1 });
+  for (let p = 1; p <= pages; p++) html += btn(p, p, { active: p === cur });
+  html += btn("›", cur + 1, { disabled: cur >= pages });
+  html += `<span class="pager-info">第 ${cur} / ${pages} 页 · 共 ${data.total} 段</span>`;
+  pager.innerHTML = html;
+  pager.querySelectorAll(".pager-btn").forEach((b) => {
+    b.addEventListener("click", () => { if (!b.disabled) loadHomeArchives(+b.dataset.page); });
+  });
+}
+
+/* ---------------- 首页：抽屉 + 仪表盘 ---------------- */
+function toggleDrawer(open) {
+  state.drawerOpen = open === undefined ? !state.drawerOpen : open;
+  $("homeView").classList.toggle("drawer-open", state.drawerOpen);
+  $("menuToggle").setAttribute("aria-expanded", state.drawerOpen ? "true" : "false");
+}
+
+// 概览 / 全部档案 两个面板切换
+function setHomePanel(which) {
+  const dash = which === "dash";
+  $("dashPanel").hidden = !dash;
+  $("allPanel").hidden = dash;
+  if (dash) loadDashboard();
+  else loadHomeArchives(1);
+}
+
+// 关系阶段 → 状态（升温/平平/需注意），颜色用现有 --good/--muted/--warn
+const WARN_STAGES = ["陷入僵局", "有点压力", "快凉了", "闹过别扭", "闹过不愉快", "有过摩擦", "有点代沟"];
+const GOOD_STAGES = ["暧昧中", "有点意思", "比较受认可", "走得挺近"];
+function statusFromStage(stage) {
+  const s = (stage || "").trim();
+  if (!s) return { key: "mild", label: "" };
+  if (WARN_STAGES.includes(s)) return { key: "warn", label: "需注意" };
+  if (GOOD_STAGES.includes(s)) return { key: "good", label: "升温中" };
+  return { key: "mild", label: "平平" };
+}
+
+function lastLine(it) {
+  return (it.chat_history || "").split("\n").filter((l) => l.trim()).slice(-1)[0] || "";
+}
+
+async function loadDashboard() {
+  let data = { items: [], total: 0 };
+  try { data = await (await fetch("/api/archives?page=1&page_size=50")).json(); } catch {}
+  const items = data.items || [];
+  $("mDeals").textContent = data.total || 0;
+  const watch = items.filter((it) => statusFromStage(it.relation_stage).key === "warn").length;
+  $("mWatch").textContent = watch;
+  $("mWatch").classList.toggle("is-warn", watch > 0);
+
+  let askCount = 0;
+  try {
+    const hist = await (await fetch("/api/history?limit=100")).json();
+    const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+    askCount = hist.filter((h) => {
+      const t = Date.parse((h.created_at || "").replace(" ", "T"));
+      return !isNaN(t) && t >= weekAgo;
+    }).length;
+  } catch {}
+  $("mAsk").textContent = askCount;
+
+  renderContinue(items[0]);
+  renderRelList(items.slice(0, 5));
+}
+
+function renderContinue(it) {
+  const wrap = $("continueWrap"), card = $("continueCard");
+  if (!it) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  const sc = state.meta.scenarios.find((s) => s.id === it.scenario);
+  const st = statusFromStage(it.relation_stage);
+  const stageTxt = it.relation_stage ? ` · ${escapeHtml(it.relation_stage)}` : "";
+  const last = lastLine(it) || "还没有聊天记录";
+  card.innerHTML = `
+    <div class="cc-top">
+      <span class="cc-meta">${sc ? sc.name : it.scenario}${stageTxt}</span>
+      ${st.label ? `<span class="rel-badge s-${st.key}">${st.label}</span>` : ""}
+    </div>
+    <div class="cc-row">
+      <div style="min-width:0">
+        <div class="cc-name">${escapeHtml(it.name)}</div>
+        <div class="cc-last">${cleanText(last.slice(0, 60))}</div>
+      </div>
+      <button class="btn-primary">继续</button>
+    </div>`;
+  card.onclick = () => openArchive(it);
+}
+
+function renderRelList(items) {
+  const el = $("relList");
+  if (!items.length) {
+    el.innerHTML = '<div class="rel-empty">还没有档案，点上面「问一问」开一段，聊完存档就会出现在这儿。</div>';
+    return;
+  }
+  el.innerHTML = items.map((it) => {
+    const sc = state.meta.scenarios.find((s) => s.id === it.scenario);
+    const st = statusFromStage(it.relation_stage);
+    const stageTxt = it.relation_stage ? ` · ${escapeHtml(it.relation_stage)}` : "";
+    const last = lastLine(it);
+    return `
+      <div class="rel-item s-${st.key}" data-id="${it.id}">
+        <span class="rel-dot"></span>
+        <div class="rel-main">
+          <div class="rel-name">${escapeHtml(it.name)}<span class="rel-sub"> · ${sc ? sc.name : it.scenario}${stageTxt}</span></div>
+          ${last ? `<div class="rel-last">${cleanText(last.slice(0, 50))}</div>` : ""}
+        </div>
+        ${st.label ? `<span class="rel-badge s-${st.key}">${st.label}</span>` : ""}
+      </div>`;
+  }).join("");
+  el.querySelectorAll(".rel-item").forEach((row) => {
+    row.addEventListener("click", () => openArchive(items.find((x) => x.id === +row.dataset.id)));
+  });
 }
 
 async function setArchiveHidden(id, hidden) {
@@ -406,6 +543,7 @@ async function setArchiveHidden(id, hidden) {
 
 function toggleVault(open) {
   state.vaultOpen = open === undefined ? !state.vaultOpen : open;
+  state.archivePage = 1;   // 切换可见/隐藏是两套数据，回到第一页
   if (state.vaultOpen) {
     let learned = false;
     try { learned = localStorage.getItem("junshi-vault-learned") === "1"; } catch {}
@@ -1088,15 +1226,28 @@ function bindEvents() {
     if (f) processImageFile(f);
   });
 
-  // 隐藏入口：连点 logo「军」5 下，开/关隐藏档案
+  // 隐藏入口：连点 logo「师」5 下，开/关隐藏档案
   let brandTaps = 0, brandTimer = null;
   $("brandMark").addEventListener("click", () => {
     brandTaps++;
     clearTimeout(brandTimer);
     brandTimer = setTimeout(() => { brandTaps = 0; }, 1500);
-    if (brandTaps >= 5) { brandTaps = 0; toggleVault(true); }
+    if (brandTaps >= 5) { brandTaps = 0; toggleVault(true); setHomePanel("all"); }
   });
-  $("vaultExitBtn").addEventListener("click", () => toggleVault(false));
+  $("vaultExitBtn").addEventListener("click", () => { toggleVault(false); });
+
+  // 抽屉导航
+  $("menuToggle").addEventListener("click", () => toggleDrawer());
+  $("homeDrawer").addEventListener("click", (e) => {
+    const item = e.target.closest(".drawer-item"); if (!item) return;
+    const nav = item.dataset.nav;
+    if (nav === "all") { state.vaultOpen = false; setHomePanel("all"); }
+    else if (nav === "history") { openDrawer(); }
+    else if (nav === "vault") { toggleVault(true); setHomePanel("all"); }
+    toggleDrawer(false);
+  });
+  $("seeAllBtn").addEventListener("click", () => { state.vaultOpen = false; setHomePanel("all"); });
+  $("backDashBtn").addEventListener("click", () => setHomePanel("dash"));
 
   // 配色切换：两个切换器共用，事件委托
   document.addEventListener("click", (e) => {

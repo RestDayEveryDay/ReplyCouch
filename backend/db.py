@@ -146,14 +146,27 @@ def get_archive(archive_id):
     return dict(row) if row else None
 
 
-def list_archives(hidden=False):
-    """默认只返回可见档案；hidden=True 时只返回被隐藏的档案。"""
+def list_archives(hidden=False, limit=None, offset=0):
+    """默认只返回可见档案；hidden=True 时只返回被隐藏的档案。
+    传 limit/offset 时做分页（用于核心列表页的分页展示）。"""
+    flag = 1 if hidden else 0
+    sql = "SELECT * FROM archives WHERE COALESCE(hidden, 0) = ? ORDER BY id DESC"
+    params = [flag]
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params += [int(limit), int(offset)]
+    with _conn() as c:
+        rows = c.execute(sql, params).fetchall()
+    return [dict(row) for row in rows]
+
+
+def count_archives(hidden=False):
+    """统计可见/隐藏档案总数，供分页计算总页数。"""
     flag = 1 if hidden else 0
     with _conn() as c:
-        rows = c.execute(
-            "SELECT * FROM archives WHERE COALESCE(hidden, 0) = ? ORDER BY id DESC", (flag,)
-        ).fetchall()
-    return [dict(row) for row in rows]
+        return c.execute(
+            "SELECT COUNT(*) FROM archives WHERE COALESCE(hidden, 0) = ?", (flag,)
+        ).fetchone()[0]
 
 
 def delete_archive(archive_id):

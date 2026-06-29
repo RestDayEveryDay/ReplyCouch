@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>军师 — 话到嘴边，问问军师</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20260616-card-flow-2">
+  <link rel="stylesheet" href="style.css?v=20260626-dashboard">
 </head>
 <body>
   <!-- 全局拖拽遮罩：拖截图到页面任意位置 -->
@@ -16,55 +16,76 @@
   <!-- ============================ 首页 ============================ -->
   <section id="homeView" class="home">
     <header class="home-top">
-      <div class="brand">
-        <span class="brand-mark" id="brandMark">师</span>
-        <span class="brand-name">军师</span>
-      </div>
-      <div class="home-top-right">
-        <div class="theme-switch" title="换个配色">
-          <button class="theme-dot" data-theme="sand" title="砂" aria-label="砂色配色"></button>
-          <button class="theme-dot" data-theme="mist" title="雾" aria-label="雾色配色"></button>
-          <button class="theme-dot" data-theme="dusk" title="黛" aria-label="黛色配色"></button>
+      <div class="home-top-left">
+        <button id="menuToggle" class="icon-btn" aria-label="展开导航" aria-expanded="false">☰</button>
+        <div class="brand">
+          <span class="brand-mark" id="brandMark">师</span>
+          <span class="brand-name">军师</span>
         </div>
-        <span id="homeEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
       </div>
+      <span id="homeEngineBadge" class="badge-quiet" title="生成引擎状态">…</span>
     </header>
 
-    <div class="hero">
-      <h1 class="hero-title">话到嘴边，<br>问问军师。</h1>
-      <p class="hero-sub">不知话题如何延续？不知表达怎样得体？军师已听召前来，随您调遣。</p>
-      <div class="hero-actions">
-        <button id="startBtn" class="btn-primary lg">问一问</button>
-      </div>
-    </div>
+    <div class="home-body">
+      <!-- 抽屉：整站导航，平时收起，点 ☰ 推开 -->
+      <aside id="homeDrawer" class="home-drawer">
+        <nav class="drawer-nav">
+          <button class="drawer-item" data-nav="all">全部档案</button>
+          <button class="drawer-item" data-nav="history">历史记录</button>
+          <button class="drawer-item" data-nav="vault">隐藏档案</button>
+          <div class="drawer-sec">
+            <span class="drawer-label">配色</span>
+            <div class="theme-switch" title="换个配色">
+              <button class="theme-dot" data-theme="sand" title="砂" aria-label="砂色配色"></button>
+              <button class="theme-dot" data-theme="mist" title="雾" aria-label="雾色配色"></button>
+              <button class="theme-dot" data-theme="dusk" title="黛" aria-label="黛色配色"></button>
+            </div>
+          </div>
+        </nav>
+      </aside>
 
-    <div class="do-row">
-      <div class="do-card">
-        <span class="do-no">01</span>
-        <h3>帮回消息</h3>
-        <p>三档语气，任君选择</p>
-      </div>
-      <div class="do-card">
-        <span class="do-no">02</span>
-        <h3>判断情况</h3>
-        <p>把整段聊天读一遍，告诉你目前状态、该往哪走</p>
-      </div>
-      <div class="do-card">
-        <span class="do-no">03</span>
-        <h3>有问必答</h3>
-        <p>拿不准怎么开口、怎么跟进、怎么收场，军师替你判断</p>
-      </div>
-    </div>
+      <main id="homeMain" class="home-main">
+        <!-- 仪表盘 -->
+        <div id="dashPanel">
+          <div class="dash-hero">
+            <h1 class="hero-title">话到嘴边，<br>问问军师。</h1>
+            <p class="hero-sub">不知话题如何延续？不知表达怎样得体？军师已听召前来，随您调遣。</p>
+            <button id="startBtn" class="btn-primary hero-cta">问一问</button>
+          </div>
 
-    <div class="archives-home" id="archivesHome">
-      <div class="section-head">
-        <h2 id="archiveTitle">我的档案</h2>
-        <span class="muted" id="archiveCount"></span>
-        <button id="vaultExitBtn" class="link-btn" hidden>退出隐藏</button>
-      </div>
-      <div id="homeArchiveList" class="archive-grid"></div>
-    </div>
+          <div class="metric-row">
+            <div class="metric-card"><div class="m-label">在聊的</div><div class="m-num" id="mDeals">—</div></div>
+            <div class="metric-card"><div class="m-label">本周问军师</div><div class="m-num" id="mAsk">—</div></div>
+            <div class="metric-card"><div class="m-label">需要关注</div><div class="m-num m-warn" id="mWatch">—</div></div>
+          </div>
 
+          <div id="continueWrap" hidden>
+            <div class="dash-label">继续上次</div>
+            <div id="continueCard"></div>
+          </div>
+
+          <div class="dash-sec">
+            <div class="dash-sec-head">
+              <span class="dash-label">你的关系</span>
+              <button id="seeAllBtn" class="link-btn">查看全部</button>
+            </div>
+            <div id="relList" class="rel-list"></div>
+          </div>
+        </div>
+
+        <!-- 全部档案：默认隐藏，分页网格 -->
+        <div id="allPanel" hidden>
+          <div class="section-head">
+            <button id="backDashBtn" class="link-btn">← 概览</button>
+            <h2 id="archiveTitle">我的档案</h2>
+            <span class="muted" id="archiveCount"></span>
+            <button id="vaultExitBtn" class="link-btn" hidden>退出隐藏</button>
+          </div>
+          <div id="homeArchiveList" class="archive-grid"></div>
+          <nav id="archivePager" class="archive-pager" aria-label="档案分页" hidden></nav>
+        </div>
+      </main>
+    </div>
   </section>
 
   <!-- ============================ 卡片式进入流程 ============================ -->
@@ -346,6 +367,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=20260616-card-flow-2"></script>
+  <script src="app.js?v=20260626-dashboard"></script>
 </body>
 </html>

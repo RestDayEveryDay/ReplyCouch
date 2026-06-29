@@ -320,12 +320,19 @@ def _parse_sliders(raw):
 
 
 @app.get("/api/archives")
-def list_archives(hidden: int = 0):
-    items = db.list_archives(hidden=bool(hidden))
+def list_archives(hidden: int = 0, page: int = 1, page_size: int = 8):
+    """分页返回档案列表。page 从 1 起；返回总数与总页数，供前端渲染分页控件。"""
+    page = max(1, page)
+    page_size = max(1, min(page_size, 50))
+    total = db.count_archives(hidden=bool(hidden))
+    pages = max(1, (total + page_size - 1) // page_size)
+    page = min(page, pages)
+    offset = (page - 1) * page_size
+    items = db.list_archives(hidden=bool(hidden), limit=page_size, offset=offset)
     for it in items:  # 滑轨 JSON 文本 → dict，方便前端直接用
         it["my_sliders"] = _parse_sliders(it.get("my_sliders"))
         it["their_sliders"] = _parse_sliders(it.get("their_sliders"))
-    return items
+    return {"items": items, "total": total, "page": page, "page_size": page_size, "pages": pages}
 
 
 @app.post("/api/archives")
