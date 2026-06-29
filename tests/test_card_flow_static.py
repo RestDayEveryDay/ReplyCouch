@@ -20,6 +20,7 @@ class CardFlowStaticTest(unittest.TestCase):
             "flowStepTitle",
             "flowStepSub",
             "flowArchiveList",
+            "flowArchivePager",
             "flowScenarioGrid",
             "flowTaskGrid",
             "flowSkipBackgroundBtn",
@@ -56,8 +57,11 @@ class CardFlowStaticTest(unittest.TestCase):
         self.assertIn("flowView", js)
         self.assertIn("flowStepTitle", js)
         self.assertIn("flowArchiveList", js)
+        self.assertIn("FLOW_ARCHIVE_PAGE_SIZE", js)
+        self.assertIn("flowArchivePage", js)
+        self.assertIn("renderFlowArchivePager", js)
         self.assertIn("data.items", js)
-        self.assertIn("page_size=50", js)
+        self.assertIn("page_size=${FLOW_ARCHIVE_PAGE_SIZE}", js)
         self.assertIn("flowScenarioGrid", js)
         self.assertIn("flowTaskGrid", js)
         self.assertIn("把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。", js)

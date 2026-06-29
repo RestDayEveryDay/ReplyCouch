@@ -18,6 +18,7 @@ const state = {
   vaultOpen: false,    // 隐藏档案「保险柜」是否打开（连点 logo 解锁）
   drawerOpen: false,   // 首页左侧抽屉导航是否展开
   flowStep: "entry",
+  flowArchivePage: 1,
 };
 
 /* ---------------- 工具 ---------------- */
@@ -230,6 +231,7 @@ function showView(view) {
 
 /* ---------------- 卡片式进入流程 ---------------- */
 const FLOW_STEPS = ["entry", "scenario", "background", "task"];
+const FLOW_ARCHIVE_PAGE_SIZE = 6;
 const FLOW_TASKS = [
   { mode: "reply", title: "帮我回", desc: "把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。" },
   { mode: "critique", title: "帮我评", desc: "写好一句拿不准的回复，军师给你分析，再写一段仅供参考。" },
@@ -284,16 +286,20 @@ function startCardFlow() {
   showFlowStep("entry");
 }
 
-async function renderFlowArchives() {
+async function renderFlowArchives(page) {
+  if (page) state.flowArchivePage = page;
+  if (!state.flowArchivePage) state.flowArchivePage = 1;
   const list = $("flowArchiveList");
   list.innerHTML = '<div class="flow-empty">正在取档案…</div>';
-  let items = [];
+  let data = { items: [], total: 0, page: 1, pages: 1 };
   try {
-    const data = await (await fetch("/api/archives?page=1&page_size=50")).json();
-    items = Array.isArray(data) ? data : (data.items || []);
-  } catch { items = []; }
+    data = await (await fetch(`/api/archives?page=${state.flowArchivePage}&page_size=${FLOW_ARCHIVE_PAGE_SIZE}`)).json();
+  } catch {}
+  const items = Array.isArray(data) ? data : (data.items || []);
+  if (!Array.isArray(data)) state.flowArchivePage = data.page || 1;
   if (!items.length) {
     list.innerHTML = '<div class="flow-empty">还没有档案。先创建新档案，聊完之后就能从这里继续。</div>';
+    renderFlowArchivePager(data);
     return;
   }
   list.innerHTML = items.map((it) => {
@@ -308,6 +314,28 @@ async function renderFlowArchives() {
   }).join("");
   list.querySelectorAll(".flow-archive-card").forEach((el) => {
     el.addEventListener("click", () => openArchive(items.find((x) => x.id === +el.dataset.id)));
+  });
+  renderFlowArchivePager(data);
+}
+
+function renderFlowArchivePager(data) {
+  const pager = $("flowArchivePager");
+  if (!pager || Array.isArray(data)) return;
+  const pages = data.pages || 1, cur = data.page || 1;
+  if (pages <= 1) { pager.innerHTML = ""; pager.hidden = true; return; }
+  pager.hidden = false;
+  const btn = (label, target, opts = {}) => {
+    const dis = opts.disabled ? " disabled" : "";
+    const on = opts.active ? " active" : "";
+    return `<button class="pager-btn${on}" data-page="${target}"${dis} aria-label="第 ${target} 页"${opts.active ? ' aria-current="page"' : ""}>${label}</button>`;
+  };
+  let html = btn("‹", cur - 1, { disabled: cur <= 1 });
+  for (let p = 1; p <= pages; p++) html += btn(p, p, { active: p === cur });
+  html += btn("›", cur + 1, { disabled: cur >= pages });
+  html += `<span class="pager-info">第 ${cur} / ${pages} 页 · 共 ${data.total || 0} 段</span>`;
+  pager.innerHTML = html;
+  pager.querySelectorAll(".pager-btn").forEach((b) => {
+    b.addEventListener("click", () => { if (!b.disabled) renderFlowArchives(+b.dataset.page); });
   });
 }
 

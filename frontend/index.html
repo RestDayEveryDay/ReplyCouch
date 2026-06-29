@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>军师 — 话到嘴边，问问军师</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20260629-copy-1">
+  <link rel="stylesheet" href="style.css?v=20260629-flow-pager-1">
 </head>
 <body>
   <!-- 全局拖拽遮罩：拖截图到页面任意位置 -->
@@ -129,6 +129,7 @@
         <h2 class="flow-title">选择一段继续</h2>
         <p class="flow-sub">点开档案后，会带着之前的记录进入工作区。</p>
         <div id="flowArchiveList" class="flow-archive-list"></div>
+        <nav id="flowArchivePager" class="archive-pager flow-archive-pager" aria-label="旧档案分页" hidden></nav>
       </div>
 
       <div class="flow-card" data-flow-step="scenario" hidden>
@@ -367,6 +368,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=20260629-copy-1"></script>
+  <script src="app.js?v=20260629-flow-pager-1"></script>
 </body>
 </html>

@@ -1054,6 +1054,7 @@ body { transition: background-color 0.25s ease, color 0.25s ease; }
 .pager-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); cursor: default; }
 .pager-btn:disabled { opacity: 0.4; cursor: default; }
 .pager-info { margin-left: 10px; font-size: 12px; color: var(--muted); }
+.flow-archive-pager { margin-top: 18px; }
 
 /* ===================== 首页主 CTA 放大 + 说明文字 ===================== */
 /* Fitts：最高频的主动作 = 页面上最大的目标 */
