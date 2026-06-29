@@ -288,7 +288,10 @@ async function renderFlowArchives() {
   const list = $("flowArchiveList");
   list.innerHTML = '<div class="flow-empty">正在取档案…</div>';
   let items = [];
-  try { items = await (await fetch("/api/archives")).json(); } catch { items = []; }
+  try {
+    const data = await (await fetch("/api/archives?page=1&page_size=50")).json();
+    items = Array.isArray(data) ? data : (data.items || []);
+  } catch { items = []; }
   if (!items.length) {
     list.innerHTML = '<div class="flow-empty">还没有档案。先创建新档案，聊完之后就能从这里继续。</div>';
     return;

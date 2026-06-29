@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>军师 — 话到嘴边，问问军师</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20260626-dashboard">
+  <link rel="stylesheet" href="style.css?v=20260629-copy-1">
 </head>
 <body>
   <!-- 全局拖拽遮罩：拖截图到页面任意位置 -->
@@ -59,14 +59,14 @@
             <div class="metric-card"><div class="m-label">需要关注</div><div class="m-num m-warn" id="mWatch">—</div></div>
           </div>
 
-          <div id="continueWrap" hidden>
+          <div id="continueWrap" class="continue-spotlight" hidden>
             <div class="dash-label">继续上次</div>
-            <div id="continueCard"></div>
+            <div id="continueCard" class="continue-card"></div>
           </div>
 
-          <div class="dash-sec">
+          <div class="dash-sec featured">
             <div class="dash-sec-head">
-              <span class="dash-label">你的关系</span>
+              <span class="dash-label">最近对话</span>
               <button id="seeAllBtn" class="link-btn">查看全部</button>
             </div>
             <div id="relList" class="rel-list"></div>
@@ -367,6 +367,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=20260626-dashboard"></script>
+  <script src="app.js?v=20260629-copy-1"></script>
 </body>
 </html>

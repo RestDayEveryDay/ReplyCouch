@@ -32,6 +32,8 @@ class CardFlowStaticTest(unittest.TestCase):
         self.assertIn("创建新档案", html)
         self.assertIn("补充背景", html)
         self.assertIn("选填，填了军师更懂情况", html)
+        self.assertIn("最近对话", html)
+        self.assertNotIn("你的关系", html)
         self.assertIn('class="flow-tools"', html)
         self.assertIn('class="flow-card-back"', html)
         self.assertNotIn('class="home-top flow-top"', html)
@@ -54,6 +56,8 @@ class CardFlowStaticTest(unittest.TestCase):
         self.assertIn("flowView", js)
         self.assertIn("flowStepTitle", js)
         self.assertIn("flowArchiveList", js)
+        self.assertIn("data.items", js)
+        self.assertIn("page_size=50", js)
         self.assertIn("flowScenarioGrid", js)
         self.assertIn("flowTaskGrid", js)
         self.assertIn("把聊天记录贴上来，军师给你三档能直接发的回复，还会标注一个翻车率。", js)
@@ -73,6 +77,8 @@ class CardFlowStaticTest(unittest.TestCase):
             ".flow-progress",
             ".flow-tools",
             ".flow-card-back",
+            ".continue-spotlight",
+            ".dash-sec.featured",
         ]:
             self.assertIn(selector, css)
 
